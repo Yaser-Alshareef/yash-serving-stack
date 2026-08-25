@@ -26,10 +26,14 @@ MODEL_ID = os.environ.get(
     "Qwen2.5-1.5B-Instruct"
 )
 
-MODEL_PATH = os.environ.get(
+import os
+
+MODEL_PATH = os.getenv(
     "MODEL_PATH",
-    r"C:\Users\YASER\w2d2_Lab\model\Qwen2.5-1.5b"
+    "Qwen/Qwen2.5-1.5B-Instruct"
 )
+
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 app = FastAPI(
     title="serving-stack",
@@ -38,11 +42,14 @@ app = FastAPI(
 
 print(f"Loading {MODEL_ID} from {MODEL_PATH} on CPU...")
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+tokenizer = AutoTokenizer.from_pretrained(
+    MODEL_PATH,
+    token=HF_TOKEN
+)
 
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_PATH,
-    torch_dtype=torch.float32
+    token=HF_TOKEN
 )
 
 model.to("cpu")

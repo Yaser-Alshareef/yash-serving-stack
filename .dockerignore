@@ -20,7 +20,8 @@ kubeconfig
 model/
 .cache/
 huggingface/
-
+model/
+hf-cache/
 # Python
 .venv/
 venv/
