@@ -45,6 +45,8 @@ FROM python:3.11-slim
 RUN useradd --create-home app
 
 ENV HF_HOME=/home/app/.cache/huggingface
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
