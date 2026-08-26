@@ -5,10 +5,17 @@ import os
 import time
 import uuid
 
+from torch import cuda
 import torch
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+
+app = FastAPI()
 
 from app.schemas import (
     ChatCompletionRequest,
@@ -30,29 +37,37 @@ import os
 
 MODEL_PATH = os.getenv(
     "MODEL_PATH",
-    "Qwen/Qwen2.5-1.5B-Instruct"
+    "/models/Qwen2.5-1.5b"
 )
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-app = FastAPI(
-    title="serving-stack",
-    version="wk2"
-)
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print(f"Loading {MODEL_ID} from {MODEL_PATH} on CPU...")
+print(f"Loading {MODEL_ID} from {MODEL_PATH}")
+print(f"Running on: {DEVICE}")
+
+if DEVICE == "cuda":
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+
+
+from pathlib import Path
+import torch
+
+print(f"Loading model from: {MODEL_PATH}")
 
 tokenizer = AutoTokenizer.from_pretrained(
     MODEL_PATH,
-    token=HF_TOKEN
+    local_files_only=True,
 )
 
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_PATH,
-    token=HF_TOKEN
+    local_files_only=True,
+    torch_dtype=torch.float32, # torch.bfloat16 if DEVICE == "cuda" else torch.float32 it cause me a problem here );
 )
 
-model.to("cpu")
+model.to(DEVICE)
 model.eval()
 
 print("Model ready")
