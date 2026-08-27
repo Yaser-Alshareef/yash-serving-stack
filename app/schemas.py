@@ -1,22 +1,16 @@
-from __future__ import annotations
+from typing import List, Literal
 
-from typing import List, Literal, Optional, Union
-
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator
-)
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChatMessage(BaseModel):
-    role: Literal[
-        "system",
-        "user",
-        "assistant"
-    ]
-
+    role: Literal["system", "user", "assistant"]
     content: str
+
+
+class CompletionRequest(BaseModel):
+    prompt: str
+    require_gpu: bool = False
 
 
 class ChatCompletionRequest(BaseModel):
@@ -40,22 +34,14 @@ class ChatCompletionRequest(BaseModel):
 
     stream: bool = False
 
-    tools: Optional[List[dict]] = None
+    require_gpu: bool = False
 
-    tool_choice: Optional[
-        Union[str, dict]
-    ] = None
-
+    # The chat endpoint expects the conversation to end with
+    # a user or system message so the model can generate the assistant reply.
     @field_validator("messages")
     @classmethod
-    def last_message_must_be_user_or_system(
-        cls,
-        value
-    ):
-        if (
-            value
-            and value[-1].role == "assistant"
-        ):
+    def last_message_must_be_user_or_system(cls, value):
+        if value and value[-1].role == "assistant":
             raise ValueError(
                 "the last message must be from "
                 "'user' or 'system', not 'assistant'"
@@ -72,10 +58,7 @@ class ResponseMessage(BaseModel):
 class Choice(BaseModel):
     index: int = 0
     message: ResponseMessage
-    finish_reason: Literal[
-        "stop",
-        "length"
-    ] = "stop"
+    finish_reason: Literal["stop", "length"] = "stop"
 
 
 class Usage(BaseModel):
@@ -86,10 +69,7 @@ class Usage(BaseModel):
 
 class ChatCompletionResponse(BaseModel):
     id: str
-    object: Literal[
-        "chat.completion"
-    ] = "chat.completion"
-
+    object: Literal["chat.completion"] = "chat.completion"
     created: int
     model: str
     choices: List[Choice]
@@ -109,5 +89,8 @@ class ModelList(BaseModel):
 
 
 class HealthResponse(BaseModel):
+    # Includes the device because /health returns both the model
+    # and the device currently being used (CPU or CUDA).
     status: Literal["ok"] = "ok"
     model: str
+    device: str

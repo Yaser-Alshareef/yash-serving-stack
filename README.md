@@ -7,3 +7,4 @@
 ### Lab 3 in Week 2 we have done a Dockerfile so we can run a container and then mount the model from a local drive or from Hugging Face; either will work fine. We also push the container to the registry (Docker Hub), and we test all endpoints after pulling and running it.
 
 ---
+### Lab 4 in Week 2 we have used a way handle gpu with (torch.cuda) to see if we use Gpu else use a cpu, we use cuda as base image
