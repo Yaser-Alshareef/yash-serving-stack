@@ -1,3 +1,4 @@
+#Libraries
 from __future__ import annotations
 
 import json
@@ -5,20 +6,21 @@ import os
 import time
 import uuid
 
-from torch import cuda
+
+from pathlib import Path
+from dotenv import load_dotenv
 import torch
+
+from torch import cuda
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-
-app = FastAPI()
 
 from app.schemas import (
     ChatCompletionRequest,
+    CompletionRequest,
     ChatCompletionResponse,
     Choice,
     HealthResponse,
@@ -28,16 +30,33 @@ from app.schemas import (
     Usage,
 )
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+REGISTRY = BASE_DIR/"app"/"registry.json"
+ENV_FILE = BASE_DIR/"app"/".env"
+
+load_dotenv(ENV_FILE)
+
+
+#-------------
+
+#FastAPI app instance
+app = FastAPI()
+
+
+API_KEY = os.environ.get("API_KEY", "")
+MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "256"))
+
+
 MODEL_ID = os.environ.get(
     "MODEL_ID",
     "Qwen2.5-1.5B-Instruct"
 )
 
-import os
 
 MODEL_PATH = os.getenv(
     "MODEL_PATH",
-    "/models/Qwen2.5-1.5b"
+    f"{BASE_DIR}/model/Qwen2.5-1.5b"
 )
 
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -50,9 +69,6 @@ print(f"Running on: {DEVICE}")
 if DEVICE == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-
-from pathlib import Path
-import torch
 
 print(f"Loading model from: {MODEL_PATH}")
 
@@ -73,12 +89,17 @@ model.eval()
 print("Model ready")
 
 
-@app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(
-        status="ok",
-        model=MODEL_ID
-    )
+#---------------
+
+
+# Endpoints Using FastAPI()
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "model": MODEL_ID,
+        "device": DEVICE
+    }
 
 
 @app.get("/v1/models", response_model=ModelList)
@@ -92,6 +113,33 @@ def list_models() -> ModelList:
             )
         ]
     )
+
+
+def load_registry_data():
+    with open(REGISTRY, "r") as f:
+        return json.load(f)
+
+@app.get("/registry")
+def list_models():
+    registry_data = load_registry_data()
+    return {"models": list(registry_data.keys())}
+
+@app.get("/registry/{name}")
+def get_model(name: str):
+    registry_data = load_registry_data()
+    
+    if name not in registry_data:
+        raise HTTPException(status_code=404, detail=f"no such model: {name}")
+        
+    return registry_data[name]
+
+
+@app.post("/v1/embeddings")
+def embeddings(payload: dict):
+    if DEVICE != "cuda":
+        raise HTTPException(400, "Embeddings require a GPU-backed instance; this instance is running in CPU-fallback mode.")
+    return {"vector": [0.1] * 8, "device_used": DEVICE}
+
 
 
 def _build_inputs(req: ChatCompletionRequest):
@@ -129,10 +177,24 @@ def _generate(
     return out[0][input_ids.shape[1]:]
 
 
-@app.post(
-    "/v1/chat/completions",
-    response_model=None
-)
+
+@app.post("/v1/chat/completions")
+def chat_completions(req: CompletionRequest):
+    if req.require_gpu and DEVICE != "cuda":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This request set require_gpu=true, but this instance is "
+                "running in CPU-fallback mode (no CUDA device available). "
+                "Retry against a GPU-backed instance, or drop require_gpu."
+            ),
+        )
+
+    return {
+        "reply": f"(on {DEVICE}) you said: {req.prompt}",
+        "device": DEVICE
+    }
+
 def chat_completions(
     req: ChatCompletionRequest
 ):
@@ -266,20 +328,3 @@ def _stream(
         media_type="text/event-stream"
     )
 
-import subprocess
-import time
-
-server = subprocess.Popen(
-    [
-        "uvicorn",
-        "main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000"
-    ]
-)
-
-time.sleep(8)
-
-print("Server process:", server.pid)
