@@ -6,21 +6,19 @@ import os
 import time
 import uuid
 
-
 from pathlib import Path
 from dotenv import load_dotenv
-import torch
 
-from torch import cuda
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader
 
 
 from app.schemas import (
     ChatCompletionRequest,
-    CompletionRequest,
     ChatCompletionResponse,
     Choice,
     HealthResponse,
@@ -42,7 +40,6 @@ load_dotenv(ENV_FILE)
 
 #FastAPI app instance
 app = FastAPI()
-
 
 API_KEY = os.environ.get("API_KEY", "")
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "256"))
@@ -91,6 +88,18 @@ print("Model ready")
 
 #---------------
 
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+def verify_api_key(key: str = Security(api_key_header)):
+    if not API_KEY:
+        # if you never set an API_KEY in .env, don't accidentally lock yourself out
+        raise HTTPException(500, "Server misconfigured: no API_KEY set")
+    if key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    return key
+
+#----------------
+
 
 # Endpoints Using FastAPI()
 @app.get("/health")
@@ -102,7 +111,7 @@ def health():
     }
 
 
-@app.get("/v1/models", response_model=ModelList)
+@app.get("/v1/models", response_model=ModelList, dependencies=[Depends(verify_api_key)])
 def list_models() -> ModelList:
     return ModelList(
         data=[
@@ -119,22 +128,22 @@ def load_registry_data():
     with open(REGISTRY, "r") as f:
         return json.load(f)
 
-@app.get("/registry")
-def list_models():
+@app.get("/registry", dependencies=[Depends(verify_api_key)])
+def list_registry():
     registry_data = load_registry_data()
     return {"models": list(registry_data.keys())}
 
-@app.get("/registry/{name}")
+@app.get("/registry/{name}", dependencies=[Depends(verify_api_key)])
 def get_model(name: str):
     registry_data = load_registry_data()
-    
+
     if name not in registry_data:
         raise HTTPException(status_code=404, detail=f"no such model: {name}")
-        
+
     return registry_data[name]
 
 
-@app.post("/v1/embeddings")
+@app.post("/v1/embeddings", dependencies=[Depends(verify_api_key)])
 def embeddings(payload: dict):
     if DEVICE != "cuda":
         raise HTTPException(400, "Embeddings require a GPU-backed instance; this instance is running in CPU-fallback mode.")
@@ -177,9 +186,10 @@ def _generate(
     return out[0][input_ids.shape[1]:]
 
 
-
-@app.post("/v1/chat/completions")
-def chat_completions(req: CompletionRequest):
+@app.post("/v1/chat/completions", dependencies=[Depends(verify_api_key)])
+def chat_completions(
+    req: ChatCompletionRequest
+):
     if req.require_gpu and DEVICE != "cuda":
         raise HTTPException(
             status_code=400,
@@ -190,14 +200,6 @@ def chat_completions(req: CompletionRequest):
             ),
         )
 
-    return {
-        "reply": f"(on {DEVICE}) you said: {req.prompt}",
-        "device": DEVICE
-    }
-
-def chat_completions(
-    req: ChatCompletionRequest
-):
     if req.model != MODEL_ID:
         raise HTTPException(
             status_code=400,
@@ -327,4 +329,3 @@ def _stream(
         events(),
         media_type="text/event-stream"
     )
-
