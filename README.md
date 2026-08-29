@@ -8,3 +8,6 @@
 
 ---
 ### Lab 4 in Week 2 we have used a way handle gpu with (torch.cuda) to see if we use Gpu else use a cpu, we use cuda as base image
+
+----
+### Lab 5 in Week 2 we have used an cpu v2 which is taking care the env file and docker compose and add an api protection layer so we can handle it like open ai api for models but this time is our    
