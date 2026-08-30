@@ -11,3 +11,6 @@
 
 ----
 ### Lab 5 in Week 2 we have used an cpu v2 which is taking care the env file and docker compose and add an api protection layer so we can handle it like open ai api for models but this time is our    
+
+----
+### Lab 1 inn Week 3 we have used the colab with T4 Gpu and we investigate the model and it is consumption regarding the gpu utli and tokens and we save the results in json formats in deferent data types  
