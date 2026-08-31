@@ -90,6 +90,37 @@ The app currently loads a local Qwen model, checks whether CUDA is available, an
 
 ---
 
+## KV cache estimate (RAM perspective)
+
+We also estimated the memory cost of the KV cache during generation. This is a RAM estimate, not GPU memory. The idea is that the cache grows with the number of layers, key/value heads, and hidden dimension.
+
+For this model we used:
+
+- Layers: 28
+- KV heads: 2
+- Head dim: hidden_size / num_attention_heads = 1536 / 12 = 128
+- Data type: fp16 = 2 bytes per value
+
+So the rough per-token cache size is:
+
+- KV cache per token ≈ 2 × 28 × 2 × 128 × 2 bytes
+- ≈ 28,672 bytes
+- ≈ 28 KB/token
+
+For a long generation window of 16,384 tokens:
+
+- 28 KB × 16,384 ≈ 0.44 GB
+
+This means that the KV cache can use roughly 0.44 GB of RAM in the worst-case generation window.
+
+To estimate how many conversations could fit in the remaining RAM, we divide the usable RAM by the KV-cache footprint:
+
+- 7.6 GB / 0.44 GB ≈ 17 conversations
+
+So the rough estimate is that around 17 conversations could fit under this RAM-based worst-case assumption, if the rest of the memory is available for the cache and not consumed by other processes.
+
+---
+
 ## Local running flow
 
 1. Copy env.example to .env
