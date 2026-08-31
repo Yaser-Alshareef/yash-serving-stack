@@ -1,0 +1,85 @@
+{
+  "reload_loop_baseline": [
+    {
+      "cycle": 0,
+      "after_load_mb": 3134.0,
+      "after_unload_mb": 0.0
+    },
+    {
+      "cycle": 1,
+      "after_load_mb": 3134.0,
+      "after_unload_mb": 0.0
+    },
+    {
+      "cycle": 2,
+      "after_load_mb": 3134.0,
+      "after_unload_mb": 0.0
+    },
+    {
+      "cycle": 3,
+      "after_load_mb": 3134.0,
+      "after_unload_mb": 0.0
+    },
+    {
+      "cycle": 4,
+      "after_load_mb": 3134.0,
+      "after_unload_mb": 0.0
+    }
+  ],
+  "leaky_run": {
+    "slope_mb_per_iter": 211.248,
+    "threshold_mb_per_iter": 1.0,
+    "leaking": true,
+    "n_samples": 20
+  },
+  "fixed_run": {
+    "slope_mb_per_iter": 0.286,
+    "threshold_mb_per_iter": 1.0,
+    "leaking": false,
+    "n_samples": 20
+  },
+  "leaky_samples": [
+    3254.0,
+    3462.0,
+    3670.0,
+    3878.0,
+    4086.0,
+    4294.0,
+    4522.0,
+    4730.0,
+    4938.0,
+    5146.0,
+    5354.0,
+    5562.0,
+    5790.0,
+    5998.0,
+    6206.0,
+    6414.0,
+    6622.0,
+    6830.0,
+    7058.0,
+    7266.0
+  ],
+  "fixed_samples": [
+    3176.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0,
+    3196.0
+  ]
+}

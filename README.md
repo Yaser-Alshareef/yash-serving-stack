@@ -121,6 +121,72 @@ So the rough estimate is that around 17 conversations could fit under this RAM-b
 
 ---
 
+## Notebook investigation
+
+The notebook work and saved result files are the main evidence for the performance and memory checks in this project.
+
+### Week 3 Day 1 investigation
+
+The main notebook in this section is the T4 GPU profiling work. It loaded the Qwen2.5-1.5B model in both fp16 and int8 modes and measured token throughput and GPU memory usage under different context lengths.
+
+The saved results in [lab_results/w3d1/profile.json](lab_results/w3d1/profile.json) show:
+
+- fp16 at 512 tokens: 3.113 GB VRAM, 54.0% utilization, 29.7 tokens/s
+- fp16 at 2048 tokens: 3.295 GB VRAM, 58.6% utilization, 24.5 tokens/s
+- fp16 at 4096 tokens: 3.568 GB VRAM, 89.6% utilization, 26.4 tokens/s
+- int8 at 512 tokens: 1.805 GB VRAM, 25.9% utilization, 5.9 tokens/s
+- int8 at 2048 tokens: 2.035 GB VRAM, 29.5% utilization, 5.6 tokens/s
+- int8 at 4096 tokens: 2.309 GB VRAM, 34.8% utilization, 5.4 tokens/s
+
+This shows that fp16 gives much better throughput, but it uses more memory. int8 is much lighter on VRAM, but the generation speed is noticeably lower.
+
+We also checked for a memory leak in the reload path. The results in [lab_results/w3d1/leak_report.json](lab_results/w3d1/leak_report.json) show:
+
+- leaky run slope: 211.248 MB per iteration
+- fixed run slope: 0.286 MB per iteration
+- leak status: true for the leaky run, false for the fixed run
+
+This was a clear demonstration that a bad unload or reload pattern could leak memory across repeated runs.
+
+### Week 3 Day 2 investigation
+
+The second notebook set focused on streaming latency and KV-cache behavior. The notebooks and saved reports show how prompt length, memory footprint, and chunked allocation affect concurrency.
+
+The KV-cache result file [lab_results/w3d2/kv_check.json](lab_results/w3d2/kv_check.json) shows:
+
+- formula KB/token: 28.0
+- measured KB/token: 28.0
+- peak KB/token: 87.6
+
+This means the theoretical cache estimate matched the measured value, but the peak could still be higher under real generation conditions.
+
+The simulation report in [lab_results/w3d2/kv_sim_report.json](lab_results/w3d2/kv_sim_report.json) shows:
+
+- slab peak concurrent: 18
+- slab admitted: 18
+- slab rejected: 42
+- block pool peak concurrent: 60
+- block pool admitted: 60
+- block pool rejected: 0
+- blockpool advantage: 3.33x
+
+This indicates that the block-pool allocation method handled memory more efficiently and allowed much higher concurrency than the simple slab approach.
+
+### Notebook files in the repo
+
+The investigation notebooks are stored in:
+
+- [notebooks/w3d1/w3d1_Lab.ipynb](notebooks/w3d1/w3d1_Lab.ipynb)
+- [notebooks/w3d1/w3d1_leak.ipynb](notebooks/w3d1/w3d1_leak.ipynb)
+- [notebooks/w3d1/w3d1_leak_bug.ipynb](notebooks/w3d1/w3d1_leak_bug.ipynb)
+- [notebooks/w3d2/w3d2.ipynb](notebooks/w3d2/w3d2.ipynb)
+- [notebooks/w3d2/w3d2_bug.ipynb](notebooks/w3d2/w3d2_bug.ipynb)
+- [notebooks/w3d2/w3d2_KV.ipynb](notebooks/w3d2/w3d2_KV.ipynb)
+
+These notebooks and the saved JSON outputs together form the main evidence for the memory, throughput, and KV-cache experiments in this project.
+
+---
+
 ## Local running flow
 
 1. Copy env.example to .env
