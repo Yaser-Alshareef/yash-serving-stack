@@ -1,8 +1,13 @@
 # sanity_harness.py
 import os, sys
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
+MODEL = os.environ.get("MODEL_ID", "Qwen2.5-1.5B-Instruct")
+HEADERS = {"X-API-Key": os.environ.get("API_KEY", "")}
 
 def check_health_reports_device():
     r = httpx.get(f"{BASE_URL}/health", timeout=10)
@@ -14,14 +19,27 @@ def check_health_reports_device():
     return True, device
 
 def check_normal_request_works(device):
-    r = httpx.post(f"{BASE_URL}/v1/chat/completions", json={"prompt": "hello"}, timeout=30)
+    r = httpx.post(
+        f"{BASE_URL}/v1/chat/completions",
+        json={"model": MODEL, "messages": [{"role": "user", "content": "hello"}]},
+        headers=HEADERS,
+        timeout=30,
+    )
     if r.status_code != 200:
         return False, f"normal request failed: {r.status_code} {r.text[:200]}"
     return True, None
 
 def check_gpu_only_request(device):
-    r = httpx.post(f"{BASE_URL}/v1/chat/completions",
-                    json={"prompt": "hello", "require_gpu": True}, timeout=30)
+    r = httpx.post(
+        f"{BASE_URL}/v1/chat/completions",
+        json={
+            "model": MODEL,
+            "messages": [{"role": "user", "content": "hello"}],
+            "require_gpu": True,
+        },
+        headers=HEADERS,
+        timeout=30,
+    )
     if device == "cpu":
         if r.status_code != 400:
             return False, f"expected clean 400 on CPU with require_gpu=true, got {r.status_code}: {r.text[:200]}"
