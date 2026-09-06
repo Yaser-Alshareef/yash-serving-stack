@@ -42,6 +42,18 @@ We improved the CPU service with the v2 setup. This version handled the env file
 ### Lab 1 in Week 3
 We used Google Colab with a T4 GPU and investigated the model behavior in terms of GPU utilization and token generation. We saved the results in JSON format in different data types for comparison and analysis.
 
+### Lab 2 in Week 3
+We investigated streaming latency and KV-cache behavior. We measured time to first token, token generation speed, and the memory used by the cache. We also compared a simple slab allocator with a block-pool allocator for handling concurrent requests.
+
+### Lab 3 in Week 3
+We served the model with vLLM and checked that the server became healthy before sending requests. We compared the baseline throughput with vLLM and tested load shedding so that the server could reject extra requests instead of allowing latency to grow without a limit.
+
+### Lab 4 in Week 3
+We tested quantized model serving with AWQ and compared it with the fp16 baseline. We checked quantization drift using JSON, factual, length, and refusal prompts. We also tested tool calling and made sure that distractor prompts did not produce unnecessary tool calls.
+
+### Lab 5 in Week 3
+We benchmarked the serving stack at different concurrency levels and looked for the capacity knee. We measured tokens per second, p95 latency, errors, and cost per million tokens. The results were also used to estimate the number of replicas and the cost of scaling out.
+
 ---
 
 ## What is inside this repo

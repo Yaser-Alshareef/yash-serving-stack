@@ -1,19 +1,16 @@
 services:
   serving:
-    image: yas1er/aidc-serving_cpu_v2
+    image: ${IMAGE:-yas1er/aidc-serving:cpuv2}
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8000}:8000"
     environment:
-      MODEL_PATH: /models/Qwen2.5-1.5b
-      
+      MODEL_PATH: ${MODEL_PATH:-/models/Qwen2.5-1.5b}
+      LOCAL_FILES_ONLY: ${LOCAL_FILES_ONLY:-true}
       MODEL_ID: ${MODEL_ID:-Qwen2.5-1.5B-Instruct}
       API_KEY: ${API_KEY}
       MAX_TOKENS: ${MAX_TOKENS:-256}
-      
     volumes:
-      # Mapped from your docker run command (using a relative path is best practice)
       - ./model:/models:ro
-      - hf-cache:/home/app/.cache/huggingface
       
     restart: unless-stopped
     healthcheck:
@@ -22,6 +19,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 120s
-
-volumes:
-  hf-cache:
