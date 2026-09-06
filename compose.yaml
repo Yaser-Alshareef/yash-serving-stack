@@ -1,6 +1,6 @@
 services:
   serving:
-    image: ${IMAGE:-yas1er/aidc-serving:cpuv2}
+    image: ${IMAGE:-yas1er/aidc-serving:cpuv2} # we changed the image to use version that we need 
     ports:
       - "${HOST_PORT:-8000}:8000"
     environment:
