@@ -31,7 +31,7 @@ from app.schemas import (
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REGISTRY = BASE_DIR/"app"/"registry.json"
-ENV_FILE = BASE_DIR/"app"/".env"
+ENV_FILE = BASE_DIR/".env"
 
 load_dotenv(ENV_FILE)
 
@@ -57,33 +57,34 @@ MODEL_PATH = os.getenv(
 )
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+LOCAL_FILES_ONLY = os.getenv("LOCAL_FILES_ONLY", "true").lower() == "true"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print(f"Loading {MODEL_ID} from {MODEL_PATH}")
-print(f"Running on: {DEVICE}")
+print(f"Loading {MODEL_ID} from {MODEL_PATH}", flush=True)
+print(f"Running on: {DEVICE}", flush=True)
 
 if DEVICE == "cuda":
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
 
 
-print(f"Loading model from: {MODEL_PATH}")
+print(f"Loading model from: {MODEL_PATH}", flush=True)
 
 tokenizer = AutoTokenizer.from_pretrained(
     MODEL_PATH,
-    local_files_only=True,
+    local_files_only=LOCAL_FILES_ONLY,
 )
 
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_PATH,
-    local_files_only=True,
+    local_files_only=LOCAL_FILES_ONLY,
     torch_dtype=torch.float32, # torch.bfloat16 if DEVICE == "cuda" else torch.float32 it cause me a problem here );
 )
 
 model.to(DEVICE)
 model.eval()
 
-print("Model ready")
+print("Model ready", flush=True)
 
 
 #---------------
@@ -93,7 +94,7 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 def verify_api_key(key: str = Security(api_key_header)):
     if not API_KEY:
         # if you never set an API_KEY in .env, don't accidentally lock yourself out
-        raise HTTPException(500, "Server misconfigured: no API_KEY set")
+        raise HTTPException(401, "API key authentication is not configured")
     if key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return key

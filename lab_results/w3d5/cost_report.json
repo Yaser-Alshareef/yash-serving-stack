@@ -1,0 +1,78 @@
+{
+  "gpu_hourly_usd": 0.35,
+  "target_p95_s": 3.0,
+  "levels": [
+    {
+      "concurrency": 1,
+      "tokens_per_s": 131.73,
+      "latency_p95_s": 0.9793,
+      "errors": 0,
+      "cost_per_million_tokens_usd": 0.738
+    },
+    {
+      "concurrency": 2,
+      "tokens_per_s": 254.36,
+      "latency_p95_s": 0.9872,
+      "errors": 0,
+      "cost_per_million_tokens_usd": 0.3822
+    },
+    {
+      "concurrency": 4,
+      "tokens_per_s": 454.36,
+      "latency_p95_s": 1.0419,
+      "errors": 0,
+      "cost_per_million_tokens_usd": 0.214
+    },
+    {
+      "concurrency": 8,
+      "tokens_per_s": 806.9,
+      "latency_p95_s": 1.1129,
+      "errors": 0,
+      "cost_per_million_tokens_usd": 0.1205
+    },
+    {
+      "concurrency": 16,
+      "tokens_per_s": 1107.77,
+      "latency_p95_s": 1.5057,
+      "errors": 0,
+      "cost_per_million_tokens_usd": 0.0878
+    }
+  ],
+  "knee": {
+    "concurrency": 16,
+    "tokens_per_s": 1107.77,
+    "latency_p95_s": 1.5057,
+    "errors": 0,
+    "cost_per_million_tokens_usd": 0.0878
+  },
+  "scale_out_plan": [
+    {
+      "target_multiple": 1.0,
+      "required_tokens_per_s": 1107.77,
+      "replicas_needed": 1,
+      "total_hourly_cost_usd": 0.35,
+      "effective_p95_s": 1.5057
+    },
+    {
+      "target_multiple": 1.5,
+      "required_tokens_per_s": 1661.655,
+      "replicas_needed": 2,
+      "total_hourly_cost_usd": 0.7,
+      "effective_p95_s": 1.5057
+    },
+    {
+      "target_multiple": 2.0,
+      "required_tokens_per_s": 2215.54,
+      "replicas_needed": 2,
+      "total_hourly_cost_usd": 0.7,
+      "effective_p95_s": 1.5057
+    },
+    {
+      "target_multiple": 3.0,
+      "required_tokens_per_s": 3323.31,
+      "replicas_needed": 3,
+      "total_hourly_cost_usd": 1.05,
+      "effective_p95_s": 1.5057
+    }
+  ]
+}
